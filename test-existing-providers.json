@@ -1,0 +1,19 @@
+{
+  "userPrompt": "Create a simple blog with 1 image",
+  "pageConfig": {
+    "title": "Test Blog",
+    "description": "Test",
+    "style": "blog",
+    "includeImages": true
+  },
+  "unifiedConfig": {
+    "text": {
+      "provider": "test"
+    },
+    "image": {
+      "provider": "unsplash"
+    }
+  },
+  "wordpressCompatible": true,
+  "outputLanguage": "english"
+}

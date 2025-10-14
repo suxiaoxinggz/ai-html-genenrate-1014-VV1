@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana 前端调用测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🍌 Nano Banana 前端调用测试</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">模拟前端 NanoBananaService 调用</h2>
+            
+            <button onclick="testNanoBananaService()" id="testBtn" 
+                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 mb-4">
+                🍌 测试 NanoBananaService
+            </button>
+            
+            <div id="result" class="mb-4"></div>
+            <div id="imageContainer"></div>
+        </div>
+        
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">📋 调试日志</h2>
+            <pre id="debugLog" class="text-xs bg-black text-green-400 p-4 rounded-lg h-64 overflow-y-auto"></pre>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logContainer = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.textContent += `[${timestamp}] ${message}\n`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+        
+        // 模拟 NanoBananaService 的调用
+        async function testNanoBananaService() {
+            const testBtn = document.getElementById('testBtn');
+            const result = document.getElementById('result');
+            const imageContainer = document.getElementById('imageContainer');
+            
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 测试中...';
+            result.innerHTML = '';
+            imageContainer.innerHTML = '';
+            
+            try {
+                log('🍌 开始模拟 NanoBananaService.generateImage 调用');
+                
+                // 模拟配置对象
+                const config = {
+                    apiKey: 'AIzaSyDN2lwEGnpNqUZUQB21y8QGuM-PHN2KG8c',
+                    basePromptStyle: 'photorealistic',
+                    styleEnhancement: 'professional',
+                    outputFormat: 'base64'
+                };
+                
+                const altText = 'A professional coffee shop interior with modern furniture';
+                
+                log(`⚙️ 配置: ${JSON.stringify(config)}`);
+                log(`📝 Alt文本: ${altText}`);
+                
+                // 构建增强提示词（模拟 buildEnhancedPrompt）
+                let enhancedPrompt = altText;
+                
+                const baseStyles = {
+                    'photorealistic': 'photorealistic editorial photo, natural daylight, 50–85mm look, gentle depth of field, true-to-life color'
+                };
+                
+                const enhancements = {
+                    'professional': 'neutral palette, balanced composition, soft frontal lighting, crisp detail'
+                };
+                
+                if (config.basePromptStyle && baseStyles[config.basePromptStyle]) {
+                    enhancedPrompt += ', ' + baseStyles[config.basePromptStyle];
+                }
+                
+                if (config.styleEnhancement && enhancements[config.styleEnhancement]) {
+                    enhancedPrompt += ', ' + enhancements[config.styleEnhancement];
+                }
+                
+                log(`✨ 增强后的提示词: "${enhancedPrompt}"`);
+                
+                // 模拟前端调用后端
+                log('🔗 调用后端 API: /api/generate/nano-banana');
+                
+                const response = await fetch('/api/generate/nano-banana', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: config.apiKey,
+                        prompt: enhancedPrompt,
+                        outputFormat: config.outputFormat
+                    })
+                });
+                
+                log(`📡 API 响应状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API 调用失败 (${response.status}): ${errorText}`);
+                }
+                
+                const responseData = await response.json();
+                log(`📊 响应数据: success=${responseData.success}, imageUrl长度=${responseData.imageUrl?.length || 0}`);
+                
+                if (responseData.success && responseData.imageUrl) {
+                    result.innerHTML = '<span class="text-green-600">✅ NanoBananaService 调用成功!</span>';
+                    log('✅ 图片生成成功');
+                    
+                    // 显示生成的图片
+                    const img = document.createElement('img');
+                    img.src = responseData.imageUrl;
+                    img.className = 'max-w-full h-auto border rounded-lg shadow-lg mt-4';
+                    img.alt = altText;
+                    img.onload = () => log('🖼️ 图片显示成功');
+                    img.onerror = () => log('❌ 图片显示失败');
+                    imageContainer.appendChild(img);
+                    
+                } else {
+                    throw new Error(responseData.error || '未返回图片数据');
+                }
+                
+            } catch (error) {
+                log(`❌ 测试失败: ${error.message}`);
+                result.innerHTML = `<span class="text-red-600">❌ ${error.message}</span>`;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🍌 测试 NanoBananaService';
+            }
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔄 测试页面已加载');
+            log(`🌐 当前域名: ${window.location.origin}`);
+        });
+    </script>
+</body>
+</html>

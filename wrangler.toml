@@ -1,0 +1,20 @@
+name = "ai-html-generator-v8"
+compatibility_date = "2024-09-26"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+[limits]
+cpu_ms = 60000
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-html-generator-production"
+database_id = "a2111838-1ea0-46de-a858-66921ba26436"
+
+[[kv_namespaces]]
+binding = "JOBS"
+id = "fcf56093bb494457a51a7dce95b4ff92"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "ai-html-generator-temp-images"

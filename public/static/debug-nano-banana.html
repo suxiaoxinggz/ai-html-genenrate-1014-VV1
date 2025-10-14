@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试 Nano Banana 完整流程</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🔍 Nano Banana 完整流程调试</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 配置测试 -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">1️⃣ 配置测试</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Gemini API Key:</label>
+                    <input type="text" id="apiKey" placeholder="AIzaSy..." 
+                        class="w-full px-3 py-2 border rounded-lg text-xs">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">基础风格:</label>
+                    <select id="baseStyle" class="w-full px-3 py-2 border rounded-lg">
+                        <option value="">不选择</option>
+                        <option value="photorealistic">写实摄影</option>
+                        <option value="sticker">贴纸风格</option>
+                        <option value="logo">Logo设计</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">主题风格:</label>
+                    <select id="enhancement" class="w-full px-3 py-2 border rounded-lg">
+                        <option value="">不选择</option>
+                        <option value="professional">可信专业</option>
+                        <option value="warm">温暖亲和</option>
+                        <option value="tech">科技未来</option>
+                    </select>
+                </div>
+                
+                <button onclick="testConfiguration()" id="configBtn" 
+                    class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    测试配置
+                </button>
+                
+                <div id="configResult" class="mt-4 text-sm"></div>
+            </div>
+            
+            <!-- 后端API测试 -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">2️⃣ 后端 API 测试</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">提示词:</label>
+                    <textarea id="prompt" rows="3" class="w-full px-3 py-2 border rounded-lg text-xs">A cute banana wearing sunglasses, cartoon style</textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">输出格式:</label>
+                    <select id="outputFormat" class="w-full px-3 py-2 border rounded-lg">
+                        <option value="base64">Base64</option>
+                        <option value="url">URL</option>
+                    </select>
+                </div>
+                
+                <button onclick="testBackendAPI()" id="backendBtn" 
+                    class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    测试后端API
+                </button>
+                
+                <div id="backendResult" class="mt-4 text-sm"></div>
+            </div>
+            
+            <!-- 前端服务测试 -->
+            <div class="bg-white p-6 rounded-lg shadow md:col-span-2">
+                <h2 class="text-xl font-semibold mb-4">3️⃣ 前端服务调用测试</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Alt文本 (前端会传递给服务):</label>
+                    <input type="text" id="altText" value="Professional coffee shop interior" 
+                        class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                
+                <button onclick="testFrontendService()" id="frontendBtn" 
+                    class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                    测试前端服务调用
+                </button>
+                
+                <div id="frontendResult" class="mt-4 text-sm"></div>
+                <div id="imageContainer" class="mt-4"></div>
+            </div>
+            
+            <!-- 调试日志 -->
+            <div class="bg-gray-50 p-6 rounded-lg md:col-span-2">
+                <h2 class="text-xl font-semibold mb-4">📋 调试日志</h2>
+                <pre id="debugLog" class="text-xs bg-black text-green-400 p-4 rounded-lg h-64 overflow-y-auto"></pre>
+                <button onclick="clearLog()" class="mt-2 bg-gray-600 text-white px-4 py-1 rounded text-sm">
+                    清空日志
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logContainer;
+        
+        function log(message) {
+            if (!logContainer) logContainer = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.textContent += `[${timestamp}] ${message}\n`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('debugLog').textContent = '';
+        }
+        
+        // 测试配置验证
+        async function testConfiguration() {
+            const configBtn = document.getElementById('configBtn');
+            const result = document.getElementById('configResult');
+            
+            configBtn.disabled = true;
+            configBtn.textContent = '测试中...';
+            result.textContent = '';
+            
+            try {
+                const apiKey = document.getElementById('apiKey').value;
+                const baseStyle = document.getElementById('baseStyle').value;
+                const enhancement = document.getElementById('enhancement').value;
+                
+                log(`🔧 测试配置: apiKey=${apiKey ? '***有值***' : '空'}, base=${baseStyle}, enhancement=${enhancement}`);
+                
+                if (!apiKey.trim()) {
+                    throw new Error('请输入 API Key');
+                }
+                
+                if (apiKey.length < 20) {
+                    throw new Error('API Key 长度似乎不足');
+                }
+                
+                if (!apiKey.startsWith('AIzaSy')) {
+                    log('⚠️ 警告: API Key 格式可能不正确，Gemini API Key 通常以 AIzaSy 开头');
+                }
+                
+                result.innerHTML = '<span class="text-green-600">✅ 配置格式验证通过</span>';
+                log('✅ 配置验证通过');
+                
+            } catch (error) {
+                result.innerHTML = `<span class="text-red-600">❌ ${error.message}</span>`;
+                log(`❌ 配置验证失败: ${error.message}`);
+            } finally {
+                configBtn.disabled = false;
+                configBtn.textContent = '测试配置';
+            }
+        }
+        
+        // 测试后端API
+        async function testBackendAPI() {
+            const backendBtn = document.getElementById('backendBtn');
+            const result = document.getElementById('backendResult');
+            
+            backendBtn.disabled = true;
+            backendBtn.textContent = '调用中...';
+            result.textContent = '';
+            
+            try {
+                const apiKey = document.getElementById('apiKey').value;
+                const prompt = document.getElementById('prompt').value;
+                const outputFormat = document.getElementById('outputFormat').value;
+                
+                if (!apiKey.trim()) {
+                    throw new Error('请先输入 API Key');
+                }
+                
+                log(`🔗 调用后端API: /api/generate/nano-banana`);
+                log(`📤 请求参数: prompt="${prompt.substring(0, 30)}...", format=${outputFormat}`);
+                
+                const requestBody = {
+                    apiKey: apiKey,
+                    prompt: prompt,
+                    outputFormat: outputFormat
+                };
+                
+                const response = await fetch(`${window.location.origin}/api/generate/nano-banana`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                log(`📡 API响应状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`❌ API错误响应: ${errorText}`);
+                    throw new Error(`API调用失败 (${response.status}): ${errorText}`);
+                }
+                
+                const responseData = await response.json();
+                log(`📊 API响应数据: ${JSON.stringify(responseData).substring(0, 100)}...`);
+                
+                if (responseData.success) {
+                    result.innerHTML = '<span class="text-green-600">✅ 后端API调用成功！</span>';
+                    log('✅ 后端API调用成功');
+                    
+                    if (responseData.imageUrl) {
+                        log(`🖼️ 收到图片URL，长度: ${responseData.imageUrl.length}`);
+                    }
+                } else {
+                    throw new Error(responseData.error || '未知错误');
+                }
+                
+            } catch (error) {
+                result.innerHTML = `<span class="text-red-600">❌ ${error.message}</span>`;
+                log(`❌ 后端API测试失败: ${error.message}`);
+            } finally {
+                backendBtn.disabled = false;
+                backendBtn.textContent = '测试后端API';
+            }
+        }
+        
+        // 测试前端服务调用
+        async function testFrontendService() {
+            const frontendBtn = document.getElementById('frontendBtn');
+            const result = document.getElementById('frontendResult');
+            const imageContainer = document.getElementById('imageContainer');
+            
+            frontendBtn.disabled = true;
+            frontendBtn.textContent = '生成中...';
+            result.textContent = '';
+            imageContainer.innerHTML = '';
+            
+            try {
+                const apiKey = document.getElementById('apiKey').value;
+                const altText = document.getElementById('altText').value;
+                const baseStyle = document.getElementById('baseStyle').value;
+                const enhancement = document.getElementById('enhancement').value;
+                const outputFormat = document.getElementById('outputFormat').value;
+                
+                if (!apiKey.trim()) {
+                    throw new Error('请先输入 API Key');
+                }
+                
+                log(`🚀 模拟前端服务调用`);
+                log(`📝 Alt文本: "${altText}"`);
+                log(`🎨 风格配置: base=${baseStyle}, enhancement=${enhancement}`);
+                
+                // 构建配置对象，模拟前端传递给 NanoBananaService 的参数
+                const config = {
+                    apiKey: apiKey,
+                    basePromptStyle: baseStyle,
+                    styleEnhancement: enhancement,
+                    outputFormat: outputFormat
+                };
+                
+                log(`⚙️ 配置对象: ${JSON.stringify(config)}`);
+                
+                // 模拟调用 NanoBananaService.generateImage
+                // 这里我们直接调用后端，因为前端的 NanoBananaService 已经编译了
+                
+                // 首先测试风格增强逻辑
+                let enhancedPrompt = altText;
+                if (baseStyle) {
+                    const baseStyles = {
+                        'photorealistic': 'photorealistic editorial photo, natural daylight, 50–85mm look, gentle depth of field, true-to-life color',
+                        'sticker': 'vector-like sticker, bold clean outlines, simple cel shading, crisp silhouette',
+                        'logo': 'modern minimalist logo lockup, clean bold sans-serif typography, simple geometric icon integrated with text, high legibility'
+                    };
+                    if (baseStyles[baseStyle]) {
+                        enhancedPrompt += ', ' + baseStyles[baseStyle];
+                    }
+                }
+                
+                if (enhancement) {
+                    const enhancements = {
+                        'professional': 'neutral palette, balanced composition, soft frontal lighting, crisp detail',
+                        'warm': 'warm golden-hour lighting, soft shadows, welcoming mood',
+                        'tech': 'cool tones, subtle gradients/glass-like sheen, rim lighting, clean geometry'
+                    };
+                    if (enhancements[enhancement]) {
+                        enhancedPrompt += ', ' + enhancements[enhancement];
+                    }
+                }
+                
+                log(`✨ 增强后的提示词: "${enhancedPrompt}"`);
+                
+                const response = await fetch(`${window.location.origin}/api/generate/nano-banana`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        prompt: enhancedPrompt,
+                        outputFormat: outputFormat
+                    })
+                });
+                
+                log(`📡 最终API调用状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`生成失败 (${response.status}): ${errorText}`);
+                }
+                
+                const responseData = await response.json();
+                
+                if (responseData.success && responseData.imageUrl) {
+                    result.innerHTML = '<span class="text-green-600">✅ 前端服务调用成功！图片已生成</span>';
+                    log('✅ 前端服务调用成功');
+                    
+                    // 显示生成的图片
+                    const img = document.createElement('img');
+                    img.src = responseData.imageUrl;
+                    img.className = 'max-w-full h-auto border rounded-lg shadow-lg mt-4';
+                    img.alt = altText;
+                    img.onload = () => log('🖼️ 图片加载完成');
+                    img.onerror = () => log('❌ 图片加载失败');
+                    imageContainer.appendChild(img);
+                    
+                } else {
+                    throw new Error(responseData.error || '生成失败');
+                }
+                
+            } catch (error) {
+                result.innerHTML = `<span class="text-red-600">❌ ${error.message}</span>`;
+                log(`❌ 前端服务测试失败: ${error.message}`);
+            } finally {
+                frontendBtn.disabled = false;
+                frontendBtn.textContent = '测试前端服务调用';
+            }
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔄 调试页面已加载');
+            log(`🌐 当前域名: ${window.location.origin}`);
+            log('📋 请按顺序进行测试：1️⃣配置 → 2️⃣后端API → 3️⃣前端服务');
+        });
+    </script>
+</body>
+</html>

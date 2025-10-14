@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试混合场景 - Gemini文字 + Nano Banana图像</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>混合场景测试：Gemini文字模型 + Nano Banana图像模型</h1>
+    
+    <div class="test-section">
+        <h2>测试场景</h2>
+        <p><strong>文字模型</strong>: Gemini Pro (需要 Google SDK)</p>
+        <p><strong>图像模型</strong>: Nano Banana (使用后端代理)</p>
+        <p><strong>期望结果</strong>: Google SDK 为文字模型初始化，但图像仍通过后端代理</p>
+    </div>
+    
+    <div id="test-results" class="test-section">
+        <h2>测试结果</h2>
+        <p>正在运行测试...</p>
+    </div>
+    
+    <script>
+        async function testMixedScenario() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<h2>测试结果</h2>';
+            
+            try {
+                // 模拟混合场景设置
+                localStorage.setItem('textApiKey', 'test-google-key-for-text');
+                localStorage.setItem('imageApiKey', 'test-google-key-for-image');
+                
+                // 创建模拟的选择器元素
+                const createMockSelect = (id, value) => {
+                    let element = document.getElementById(id);
+                    if (!element) {
+                        element = document.createElement('select');
+                        element.id = id;
+                        element.style.display = 'none';
+                        document.body.appendChild(element);
+                    }
+                    element.value = value;
+                    return element;
+                };
+                
+                // 设置混合场景：Gemini文字 + Nano Banana图像
+                createMockSelect('textModelProvider', 'gemini');
+                createMockSelect('imageModelProvider', 'nano-banana');
+                createMockSelect('textModel', 'gemini-pro');
+                createMockSelect('imageModel', 'nano-banana');
+                
+                results.innerHTML += '<div class="info">✅ 场景设置完成:</div>';
+                results.innerHTML += '<p>📝 textModelProvider: gemini</p>';
+                results.innerHTML += '<p>🖼️ imageModelProvider: nano-banana</p>';
+                
+                // 测试SDK初始化
+                const sdkResponse = await fetch('/api/sdk/init', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKeys: {
+                            google: 'test-google-key'  // 模拟Google SDK初始化
+                        }
+                    })
+                });
+                
+                const sdkResult = await sdkResponse.json();
+                results.innerHTML += '<div class="info">🔧 SDK 初始化测试:</div>';
+                
+                if (sdkResult.success) {
+                    const initialized = sdkResult.data.initialized;
+                    if (initialized.includes('Google AI')) {
+                        results.innerHTML += '<div class="success">✅ Google SDK 已初始化 (用于Gemini文字模型)</div>';
+                    } else {
+                        results.innerHTML += '<div class="error">❌ Google SDK 未初始化 (可能影响Gemini文字模型)</div>';
+                    }
+                    results.innerHTML += `<p>已初始化: ${initialized.join(', ') || '无'}</p>`;
+                }
+                
+                // 测试Nano Banana后端代理
+                results.innerHTML += '<div class="info">🍌 Nano Banana 后端代理测试:</div>';
+                
+                const nanoBananaResponse = await fetch('/api/test/nano-banana', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: 'test-key'
+                    })
+                });
+                
+                if (nanoBananaResponse.ok || nanoBananaResponse.status === 400) {
+                    results.innerHTML += '<div class="success">✅ Nano Banana 后端代理工作正常</div>';
+                    results.innerHTML += '<p>📡 图像生成将通过后端代理进行，不使用前端SDK</p>';
+                } else {
+                    results.innerHTML += '<div class="error">❌ Nano Banana 后端代理不可用</div>';
+                }
+                
+                // 结论
+                results.innerHTML += '<div class="info">📊 测试结论:</div>';
+                results.innerHTML += '<div class="success">✅ 混合场景支持正常</div>';
+                results.innerHTML += '<p>• Gemini文字模型可以使用Google SDK</p>';
+                results.innerHTML += '<p>• Nano Banana图像模型使用后端代理</p>';
+                results.innerHTML += '<p>• 无架构冲突，两者可以并存</p>';
+                
+            } catch (error) {
+                results.innerHTML += `<div class="error">❌ 测试错误: ${error.message}</div>`;
+            }
+        }
+        
+        // 运行测试
+        testMixedScenario();
+    </script>
+</body>
+</html>

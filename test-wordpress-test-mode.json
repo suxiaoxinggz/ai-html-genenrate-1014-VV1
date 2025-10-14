@@ -1,0 +1,19 @@
+{
+  "userPrompt": "Create a simple blog post about AI technology with 2 images",
+  "pageConfig": {
+    "title": "AI Technology Blog Post",
+    "description": "A comprehensive guide to AI technology",
+    "style": "blog",
+    "includeImages": true
+  },
+  "unifiedConfig": {
+    "text": {
+      "provider": "test"
+    },
+    "image": {
+      "provider": "test"
+    }
+  },
+  "wordpressCompatible": true,
+  "outputLanguage": "english"
+}

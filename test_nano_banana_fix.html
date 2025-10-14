@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试 Nano Banana SDK 修复</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Nano Banana SDK 初始化修复测试</h1>
+    
+    <div id="test-results"></div>
+    
+    <script>
+        // 模拟Nano Banana选择的测试
+        async function testNanoBananaSDKFix() {
+            const results = document.getElementById('test-results');
+            
+            // 测试1: 模拟选择nano-banana作为图像提供商
+            localStorage.setItem('textApiKey', 'test-google-key');
+            localStorage.setItem('imageApiKey', 'test-google-key');
+            
+            // 模拟DOM元素
+            const createMockSelect = (id, value) => {
+                let element = document.getElementById(id);
+                if (!element) {
+                    element = document.createElement('select');
+                    element.id = id;
+                    document.body.appendChild(element);
+                }
+                element.value = value;
+                return element;
+            };
+            
+            // 设置为nano-banana图像提供商和gemini文本提供商
+            createMockSelect('textModelProvider', 'gemini');
+            createMockSelect('imageModelProvider', 'nano-banana');
+            createMockSelect('textModel', 'gemini-pro');
+            createMockSelect('imageModel', 'nano-banana');
+            
+            results.innerHTML += '<h2>测试设置:</h2>';
+            results.innerHTML += '<p>✅ textModelProvider: gemini</p>';
+            results.innerHTML += '<p>✅ imageModelProvider: nano-banana</p>';
+            results.innerHTML += '<p>✅ textModel: gemini-pro</p>';
+            results.innerHTML += '<p>✅ imageModel: nano-banana</p>';
+            
+            // 测试SDK初始化请求
+            try {
+                const response = await fetch('/api/sdk/init', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKeys: {} // 空的API密钥对象，测试是否会初始化Google SDK
+                    })
+                });
+                
+                const result = await response.json();
+                results.innerHTML += '<h2>SDK 初始化结果:</h2>';
+                
+                if (result.success) {
+                    const initialized = result.data.initialized;
+                    if (initialized.includes('Google AI')) {
+                        results.innerHTML += '<p>❌ 错误: Google SDK 仍被初始化!</p>';
+                        results.innerHTML += '<p style="color: red;">这意味着修复失败，Google SDK 可能会绕过后端代理</p>';
+                    } else {
+                        results.innerHTML += '<p>✅ 正确: Google SDK 未被初始化</p>';
+                        results.innerHTML += '<p style="color: green;">Nano Banana 将正确使用后端代理</p>';
+                    }
+                    results.innerHTML += `<p>已初始化的SDK: ${initialized.join(', ') || '无'}</p>`;
+                } else {
+                    results.innerHTML += '<p>⚠️ SDK 初始化请求失败</p>';
+                }
+            } catch (error) {
+                results.innerHTML += `<p>❌ 测试错误: ${error.message}</p>`;
+            }
+            
+            // 测试后端代理端点
+            try {
+                results.innerHTML += '<h2>后端代理测试:</h2>';
+                const testResponse = await fetch('/api/test/nano-banana');
+                if (testResponse.ok) {
+                    results.innerHTML += '<p>✅ Nano Banana 后端代理端点可用</p>';
+                } else {
+                    results.innerHTML += '<p>❌ Nano Banana 后端代理端点不可用</p>';
+                }
+            } catch (error) {
+                results.innerHTML += `<p>❌ 后端代理测试错误: ${error.message}</p>`;
+            }
+        }
+        
+        // 运行测试
+        testNanoBananaSDKFix();
+    </script>
+</body>
+</html>

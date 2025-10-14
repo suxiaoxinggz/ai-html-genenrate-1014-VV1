@@ -1,0 +1,22 @@
+{
+  "userPrompt": "Create a simple blog post about AI technology with 1 image",
+  "pageConfig": {
+    "title": "AI Technology Blog Post", 
+    "description": "A comprehensive guide to AI technology",
+    "style": "blog",
+    "includeImages": true
+  },
+  "unifiedConfig": {
+    "text": {
+      "provider": "test"
+    },
+    "image": {
+      "provider": "workai",
+      "model": "flux-1.1-pro",
+      "apiKey": "dPYA-K6jhB-MmFIQL63h_FKh6Kra3CQ7HYUAn8BZ",
+      "accountId": "9c0e0db160b76ba5ee4a64b917bac49b"
+    }
+  },
+  "wordpressCompatible": true,
+  "outputLanguage": "english"
+}

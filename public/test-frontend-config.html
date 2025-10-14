@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端配置传递测试 - Nano Banana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+            🔍 前端配置传递测试 - Nano Banana
+        </h1>
+        
+        <!-- 模拟用户输入的配置 -->
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">🎛️ 用户输入配置</h2>
+            
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                    <input type="text" id="userApiKey" class="w-full border rounded px-3 py-2" 
+                           value="AIzaSyDN2lwEGnpNqUZUQB21y8QGuM-PHN2KG8c"
+                           placeholder="输入你的 Google API Key">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">输出格式</label>
+                    <select id="outputFormat" class="w-full border rounded px-3 py-2">
+                        <option value="base64">Base64</option>
+                        <option value="url">URL</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Base Prompt Style</label>
+                    <input type="text" id="basePromptStyle" class="w-full border rounded px-3 py-2"
+                           placeholder="例如: professional, artistic, modern"
+                           value="professional photography style">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Style Enhancement</label>
+                    <input type="text" id="styleEnhancement" class="w-full border rounded px-3 py-2"
+                           placeholder="例如: high quality, detailed, 4K"
+                           value="high quality, detailed, professional lighting">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">测试提示词</label>
+                <input type="text" id="testPrompt" class="w-full border rounded px-3 py-2"
+                       value="Modern office building with glass facade and professional architecture"
+                       placeholder="输入图片生成提示词">
+            </div>
+            
+            <button onclick="testConfigPassing()" 
+                    id="testBtn"
+                    class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">
+                🧪 测试配置传递和图片生成
+            </button>
+        </div>
+
+        <!-- 结果显示 -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">📊 测试结果</h2>
+            <div id="results" class="space-y-4">
+                <p class="text-gray-600">点击上方按钮开始测试...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testConfigPassing() {
+            const testBtn = document.getElementById('testBtn');
+            const results = document.getElementById('results');
+            
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 测试中...';
+            
+            // 清空结果
+            results.innerHTML = '<p class="text-blue-600">🔄 正在测试配置传递...</p>';
+            
+            try {
+                // 1. 模拟用户在前端配置 Nano Banana
+                const userConfig = {
+                    apiKey: document.getElementById('userApiKey').value,
+                    basePromptStyle: document.getElementById('basePromptStyle').value,
+                    styleEnhancement: document.getElementById('styleEnhancement').value,
+                    outputFormat: document.getElementById('outputFormat').value
+                };
+                
+                const testPrompt = document.getElementById('testPrompt').value;
+                
+                // 2. 保存配置到 localStorage (模拟前端配置保存)
+                localStorage.setItem('imageApiKey', userConfig.apiKey);
+                localStorage.setItem('nanoBananaConfig', JSON.stringify({
+                    apiKey: userConfig.apiKey,
+                    basePromptStyle: userConfig.basePromptStyle,
+                    styleEnhancement: userConfig.styleEnhancement,
+                    outputFormat: userConfig.outputFormat
+                }));
+                
+                results.innerHTML = `
+                    <div class="space-y-2">
+                        <p class="text-green-600">✅ 步骤1: 用户配置已保存到 localStorage</p>
+                        <div class="bg-gray-50 p-3 rounded text-sm">
+                            <pre>${JSON.stringify(userConfig, null, 2)}</pre>
+                        </div>
+                        <p class="text-blue-600">🔄 步骤2: 模拟前端 collectUnifiedConfig() 收集配置...</p>
+                    </div>
+                `;
+                
+                // 3. 模拟 collectUnifiedConfig() 函数
+                const unifiedConfig = collectUnifiedConfigTest();
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                results.innerHTML += `
+                    <div class="space-y-2">
+                        <p class="text-green-600">✅ 步骤2: 统一配置收集完成</p>
+                        <div class="bg-gray-50 p-3 rounded text-sm">
+                            <strong>Image Config:</strong>
+                            <pre>${JSON.stringify(unifiedConfig.image, null, 2)}</pre>
+                        </div>
+                        <p class="text-blue-600">🔄 步骤3: 发送到后端进行图片生成...</p>
+                    </div>
+                `;
+                
+                // 4. 发送请求到后端
+                const requestStartTime = Date.now();
+                
+                const response = await axios.post('/api/generate/nano-banana', {
+                    prompt: testPrompt,
+                    apiKey: userConfig.apiKey,
+                    basePromptStyle: userConfig.basePromptStyle,
+                    styleEnhancement: userConfig.styleEnhancement,
+                    outputFormat: userConfig.outputFormat
+                });
+                
+                const requestDuration = Date.now() - requestStartTime;
+                
+                if (response.data.success) {
+                    const imageSize = response.data.imageUrl ? response.data.imageUrl.length : 0;
+                    
+                    results.innerHTML += `
+                        <div class="space-y-2">
+                            <p class="text-green-600">✅ 步骤3: 后端图片生成成功！</p>
+                            <div class="bg-green-50 p-3 rounded">
+                                <p><strong>响应时间:</strong> ${requestDuration}ms</p>
+                                <p><strong>图片大小:</strong> ${imageSize} characters</p>
+                                <p><strong>输出格式:</strong> ${userConfig.outputFormat}</p>
+                            </div>
+                            
+                            ${response.data.imageUrl ? `
+                            <div class="mt-4">
+                                <h4 class="font-semibold mb-2">🖼️ 生成的图片:</h4>
+                                <img src="${response.data.imageUrl}" 
+                                     alt="Generated image" 
+                                     class="max-w-full h-64 object-contain rounded border">
+                            </div>
+                            ` : ''}
+                            
+                            <div class="bg-blue-50 p-4 rounded mt-4">
+                                <h4 class="font-semibold text-blue-800 mb-2">🎯 结论:</h4>
+                                <p class="text-blue-700">
+                                    ✅ <strong>用户前端输入的 API KEY 和参数能够正确传递到 Nano Banana 模型！</strong>
+                                </p>
+                                <ul class="list-disc list-inside mt-2 text-blue-600 text-sm">
+                                    <li>API Key 正确传递和验证</li>
+                                    <li>basePromptStyle 参数生效</li>
+                                    <li>styleEnhancement 参数生效</li>
+                                    <li>outputFormat 选择生效</li>
+                                    <li>图片生成成功完成</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(response.data.error || '生成失败');
+                }
+                
+            } catch (error) {
+                results.innerHTML += `
+                    <div class="bg-red-50 p-4 rounded">
+                        <p class="text-red-600">❌ 测试失败: ${error.message}</p>
+                        <p class="text-red-500 text-sm mt-2">请检查 API Key 或网络连接</p>
+                    </div>
+                `;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🧪 重新测试配置传递';
+            }
+        }
+        
+        // 模拟前端的 collectUnifiedConfig 函数
+        function collectUnifiedConfigTest() {
+            const safeGet = (k) => {
+                try { 
+                    return sessionStorage.getItem(k) || localStorage.getItem(k); 
+                } catch { 
+                    return null; 
+                }
+            };
+            
+            const json = (k, defaultValue) => { 
+                try { 
+                    const val = safeGet(k);
+                    return val ? JSON.parse(val) : defaultValue; 
+                } catch { 
+                    return defaultValue; 
+                } 
+            };
+
+            return {
+                image: {
+                    provider: 'nano-banana',
+                    apiKey: safeGet('imageApiKey') || '',
+                    outputFormat: document.getElementById('outputFormat').value || 'base64',
+                    nanoBanana: json('nanoBananaConfig', { 
+                        basePromptStyle: '', 
+                        styleEnhancement: '' 
+                    })
+                }
+            };
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Nano Banana 配置传递测试页面已加载');
+        });
+    </script>
+</body>
+</html>

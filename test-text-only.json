@@ -1,0 +1,22 @@
+{
+  "userPrompt": "Create a simple blog post about AI technology",
+  "pageConfig": {
+    "title": "AI Technology Blog Post",
+    "description": "A comprehensive guide to AI technology",
+    "style": "blog",
+    "includeImages": false
+  },
+  "unifiedConfig": {
+    "text": {
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "apiKey": "AIzaSyDN2lwEGnpNqUZUQB21y8QGuM"
+    },
+    "image": {
+      "provider": "test",
+      "apiKey": "test"
+    }
+  },
+  "wordpressCompatible": false,
+  "outputLanguage": "english"
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head><title>LocalStorage 检查</title></head>
+<body>
+<h1>LocalStorage 内容检查</h1>
+<div id="result"></div>
+<script>
+const result = document.getElementById('result');
+const nanoBananaConfig = localStorage.getItem('nanoBananaConfig');
+result.innerHTML = '<h2>nanoBananaConfig:</h2><pre>' + 
+  (nanoBananaConfig || '❌ 不存在') + '</pre>';
+  
+if (nanoBananaConfig) {
+  try {
+    const parsed = JSON.parse(nanoBananaConfig);
+    result.innerHTML += '<h2>解析后的配置:</h2><pre>' + 
+      JSON.stringify(parsed, null, 2) + '</pre>';
+  } catch (e) {
+    result.innerHTML += '<p style="color:red">❌ JSON解析失败: ' + e.message + '</p>';
+  }
+} else {
+  result.innerHTML += '<p style="color:red">❌ 这就是问题所在！用户没有配置Nano Banana API key</p>';
+  result.innerHTML += '<p style="color:blue">💡 解决方案：用户需要在主页面选择"Nano Banana (Gemini)"时，在弹出的配置窗口中输入API key并保存</p>';
+}
+</script>
+</body>
+</html>

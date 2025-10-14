@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Test</title>
+</head>
+<body>
+    <button onclick="testFunction()">Test Function</button>
+    <div id="result"></div>
+    
+    <script>
+        window.testFunction = function() {
+            document.getElementById('result').innerHTML = 'Function works!';
+            console.log('Test function called successfully');
+        }
+        
+        // Test if function exists
+        console.log('testFunction exists:', typeof window.testFunction);
+        console.log('All window properties:', Object.keys(window).filter(k => k.includes('test')));
+    </script>
+</body>
+</html>

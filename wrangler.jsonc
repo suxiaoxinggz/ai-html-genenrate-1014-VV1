@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-html-generator-v9",
+  "compatibility_date": "2024-09-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "./dist",
+  
+  // Enhanced limits for async processing
+  "limits": {
+    "cpu_ms": 60000  // 60 seconds CPU time for individual tasks
+  },
+  
+  // D1 Database for storing generation records
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-html-generator-production",
+      "database_id": "a2111838-1ea0-46de-a858-66921ba26436"
+    }
+  ],
+  
+  // KV for async job management
+  "kv_namespaces": [
+    {
+      "binding": "JOBS",
+      "id": "fcf56093bb494457a51a7dce95b4ff92"
+    }
+  ],
+  
+  // R2 Storage for temporary image hosting (WordPress compatibility)
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "ai-html-generator-temp-images"
+    }
+  ]
+}

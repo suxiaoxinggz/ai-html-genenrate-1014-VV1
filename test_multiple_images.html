@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana 多图片测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+            🍌 Nano Banana 多图片生成测试
+        </h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">测试场景：HTML 生成包含多张图片</h2>
+            <p class="text-gray-600 mb-4">
+                模拟实际 HTML 生成场景，其中包含多张图片占位符需要同时生成。
+                这将测试 Nano Banana 在并发处理多个提示词时的表现。
+            </p>
+            
+            <button 
+                id="testMultipleImages" 
+                class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                onclick="testMultipleImageGeneration()">
+                开始测试多图片生成
+            </button>
+        </div>
+
+        <div id="results" class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4">测试结果：</h3>
+            <div id="testStatus" class="text-gray-600">
+                等待测试开始...
+            </div>
+            <div id="imageResults" class="grid md:grid-cols-2 gap-4 mt-6"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testMultipleImageGeneration() {
+            const testButton = document.getElementById('testMultipleImages');
+            const testStatus = document.getElementById('testStatus');
+            const imageResults = document.getElementById('imageResults');
+            
+            testButton.disabled = true;
+            testButton.textContent = '测试中...';
+            testStatus.textContent = '正在同时生成多张图片...';
+            imageResults.innerHTML = '';
+
+            // 模拟 HTML 生成场景中的多个图片提示词
+            const imagePrompts = [
+                {
+                    id: 1,
+                    prompt: "Modern office building with glass facade and professional architecture",
+                    alt: "Company headquarters building"
+                },
+                {
+                    id: 2, 
+                    prompt: "Diverse professional team working together around a conference table",
+                    alt: "Team collaboration meeting"
+                },
+                {
+                    id: 3,
+                    prompt: "High-tech computer setup with multiple monitors and modern workspace",
+                    alt: "Professional workstation setup"
+                },
+                {
+                    id: 4,
+                    prompt: "Business handshake between professionals in corporate setting",
+                    alt: "Business partnership agreement"
+                },
+                {
+                    id: 5,
+                    prompt: "Modern office interior with open space and collaborative work areas", 
+                    alt: "Contemporary office environment"
+                }
+            ];
+
+            try {
+                testStatus.textContent = `正在并发生成 ${imagePrompts.length} 张图片...`;
+                
+                // 🚀 并发发送所有图片生成请求 - 测试 Nano Banana 的并发处理能力
+                const startTime = Date.now();
+                const promises = imagePrompts.map(async (imagePrompt, index) => {
+                    const individualStartTime = Date.now();
+                    
+                    // 添加单个图片的状态显示
+                    const statusDiv = document.createElement('div');
+                    statusDiv.id = `status-${imagePrompt.id}`;
+                    statusDiv.className = 'bg-gray-50 p-4 rounded mb-2';
+                    statusDiv.innerHTML = `
+                        <h4 class="font-semibold">图片 ${imagePrompt.id}: ${imagePrompt.alt}</h4>
+                        <p class="text-sm text-gray-600">🔄 生成中...</p>
+                    `;
+                    imageResults.appendChild(statusDiv);
+                    
+                    try {
+                        const response = await axios.post('/api/generate/nano-banana', {
+                            prompt: imagePrompt.prompt,
+                            apiKey: 'AIzaSyDN2lwEGnpNqUZUQB21y8QGuM-PHN2KG8c',
+                            outputFormat: 'base64',
+                            aspectRatio: '16:9'
+                        });
+                        
+                        const individualDuration = Date.now() - individualStartTime;
+                        
+                        if (response.data.success) {
+                            statusDiv.innerHTML = `
+                                <h4 class="font-semibold text-green-600">✅ 图片 ${imagePrompt.id}: ${imagePrompt.alt}</h4>
+                                <p class="text-sm text-gray-600">生成时间: ${individualDuration}ms</p>
+                                <p class="text-sm text-gray-600">提示词: "${imagePrompt.prompt}"</p>
+                                <div class="mt-2">
+                                    <img src="${response.data.imageUrl}" 
+                                         alt="${imagePrompt.alt}" 
+                                         class="w-full h-32 object-cover rounded"
+                                         loading="lazy">
+                                </div>
+                            `;
+                            return {
+                                success: true,
+                                id: imagePrompt.id,
+                                duration: individualDuration,
+                                prompt: imagePrompt.prompt
+                            };
+                        } else {
+                            throw new Error(response.data.error || 'Generation failed');
+                        }
+                    } catch (error) {
+                        const individualDuration = Date.now() - individualStartTime;
+                        statusDiv.innerHTML = `
+                            <h4 class="font-semibold text-red-600">❌ 图片 ${imagePrompt.id}: ${imagePrompt.alt}</h4>
+                            <p class="text-sm text-red-600">错误: ${error.message}</p>
+                            <p class="text-sm text-gray-600">耗时: ${individualDuration}ms</p>
+                        `;
+                        return {
+                            success: false,
+                            id: imagePrompt.id,
+                            error: error.message,
+                            duration: individualDuration
+                        };
+                    }
+                });
+
+                // 等待所有图片生成完成
+                const results = await Promise.all(promises);
+                const totalDuration = Date.now() - startTime;
+                
+                // 统计结果
+                const successful = results.filter(r => r.success).length;
+                const failed = results.filter(r => !r.success).length;
+                const averageDuration = results.reduce((sum, r) => sum + r.duration, 0) / results.length;
+                
+                testStatus.innerHTML = `
+                    <div class="space-y-2">
+                        <h3 class="font-semibold text-lg">📊 测试完成统计</h3>
+                        <p><span class="font-medium">总耗时:</span> ${totalDuration}ms (${(totalDuration/1000).toFixed(2)}秒)</p>
+                        <p><span class="font-medium">成功生成:</span> ${successful}/${imagePrompts.length} 张图片</p>
+                        <p><span class="font-medium">失败:</span> ${failed} 张图片</p>
+                        <p><span class="font-medium">平均单图生成时间:</span> ${averageDuration.toFixed(0)}ms</p>
+                        <p><span class="font-medium">并发效果:</span> 
+                           ${successful > 0 ? '✅ Nano Banana 支持并发多图片生成' : '❌ 并发处理存在问题'}
+                        </p>
+                    </div>
+                `;
+
+                console.log('🍌 Nano Banana 多图片并发测试结果:', {
+                    totalDuration,
+                    successful,
+                    failed,
+                    averageDuration,
+                    results
+                });
+
+            } catch (error) {
+                testStatus.innerHTML = `
+                    <div class="text-red-600">
+                        <h3 class="font-semibold">❌ 测试失败</h3>
+                        <p>错误: ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                testButton.disabled = false;
+                testButton.textContent = '重新测试多图片生成';
+            }
+        }
+
+        // 页面加载完成后显示说明
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🍌 Nano Banana 多图片测试页面已加载');
+            console.log('📝 测试目的: 验证 Nano Banana 在 HTML 生成场景中的多图片并发处理能力');
+        });
+    </script>
+</body>
+</html>

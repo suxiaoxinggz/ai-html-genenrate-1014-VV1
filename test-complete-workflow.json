@@ -1,0 +1,24 @@
+{
+  "userPrompt": "Create a simple blog post about AI technology with 2 images",
+  "pageConfig": {
+    "title": "AI Technology Blog Post",
+    "description": "A comprehensive guide to AI technology",
+    "style": "blog",
+    "includeImages": true
+  },
+  "unifiedConfig": {
+    "text": {
+      "provider": "gemini",
+      "model": "gemini-1.5-flash",
+      "apiKey": "AIzaSyDN2lwEGnpNqUZUQB21y8QGuM"
+    },
+    "image": {
+      "provider": "workai",
+      "model": "flux-1.1-pro",
+      "apiKey": "dPYA-K6jhB-MmFIQL63h_FKh6Kra3CQ7HYUAn8BZ",
+      "accountId": "9c0e0db160b76ba5ee4a64b917bac49b"
+    }
+  },
+  "wordpressCompatible": true,
+  "outputLanguage": "english"
+}

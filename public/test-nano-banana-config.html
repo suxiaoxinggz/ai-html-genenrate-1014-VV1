@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana 配置参数测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🍌 Nano Banana 配置参数完整性测试</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">测试用户配置传递</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">API Key:</label>
+                    <input type="password" id="apiKey" value="AIzaSyDN2lwEGnpNqUZUQB21y8QGuM-PHN2KG8c" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">输出格式:</label>
+                    <select id="outputFormat" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="base64">Base64</option>
+                        <option value="url">URL</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">基础风格:</label>
+                    <select id="basePromptStyle" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="">无</option>
+                        <option value="photorealistic" selected>写实摄影</option>
+                        <option value="sticker">贴纸 / 图标</option>
+                        <option value="logo">Logo / 含文字</option>
+                        <option value="product">商品图（白底）</option>
+                        <option value="illustration">留白背景插图</option>
+                        <option value="comic">漫画分格</option>
+                        <option value="flatlay">俯拍平铺（Flat-lay）</option>
+                        <option value="ui">UI / 图解插图</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">主题风格:</label>
+                    <select id="styleEnhancement" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="">无</option>
+                        <option value="professional" selected>可信专业</option>
+                        <option value="warm">温暖亲和</option>
+                        <option value="tech">科技未来</option>
+                        <option value="energetic">活力年轻</option>
+                        <option value="minimal">极简高级</option>
+                        <option value="natural">自然清新</option>
+                        <option value="dramatic">戏剧对比</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">测试提示词:</label>
+                <input type="text" id="altText" value="A modern coffee shop interior with comfortable seating" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md">
+            </div>
+            
+            <button onclick="testNanoBananaConfig()" id="testBtn" 
+                class="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 mb-4">
+                🍌 测试完整配置传递
+            </button>
+            
+            <div id="result" class="mb-4"></div>
+            <div id="imageContainer"></div>
+        </div>
+        
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">📋 调试日志</h2>
+            <pre id="debugLog" class="text-xs bg-black text-green-400 p-4 rounded-lg h-64 overflow-y-auto"></pre>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logContainer = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.textContent += `[${timestamp}] ${message}\n`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+        
+        // 基础风格映射（与 NanoBananaService.ts 中相同）
+        const BASE_PROMPT_STYLES = {
+            'photorealistic': 'photorealistic editorial photo, natural daylight, 50–85mm look, gentle depth of field, true-to-life color',
+            'sticker': 'vector-like sticker, bold clean outlines, simple cel shading, crisp silhouette',
+            'logo': 'modern minimalist logo lockup, clean bold sans-serif typography, simple geometric icon integrated with text, high legibility',
+            'product': 'studio product photo on seamless white, high-key softbox lighting, subtle natural shadow under the item, ultra-sharp focus',
+            'illustration': 'minimal backdrop with generous negative space for overlay text, soft diffused lighting, quiet premium mood',
+            'comic': 'single comic panel, cinematic noir tone, dramatic lighting, high-contrast inks, clear focal framing',
+            'flatlay': 'flat-lay composition shot from directly above, balanced arrangement, soft top light, clean background',
+            'ui': 'flat, UI-inspired illustration, clear iconography, minimal color palette, high readability'
+        };
+        
+        // 主题风格映射（与 NanoBananaService.ts 中相同）
+        const STYLE_ENHANCEMENTS = {
+            'professional': 'neutral palette, balanced composition, soft frontal lighting, crisp detail',
+            'warm': 'warm golden-hour lighting, soft shadows, welcoming mood',
+            'tech': 'cool tones, subtle gradients/glass-like sheen, rim lighting, clean geometry',
+            'energetic': 'high contrast, dynamic angle, energetic color accents',
+            'minimal': 'minimalist layout, generous negative space, muted premium palette',
+            'natural': 'natural daylight, airy atmosphere, organic textures',
+            'dramatic': 'dramatic chiaroscuro lighting, deep shadows, high contrast focal point'
+        };
+        
+        // 模拟 buildEnhancedPrompt 函数
+        function buildEnhancedPrompt(altText, config) {
+            const enhancements = [];
+            
+            // 首先添加原始文本
+            enhancements.push(altText);
+            
+            // 添加基础风格
+            if (config.basePromptStyle && BASE_PROMPT_STYLES[config.basePromptStyle]) {
+                enhancements.push(BASE_PROMPT_STYLES[config.basePromptStyle]);
+            }
+            
+            // 添加主题风格
+            if (config.styleEnhancement && STYLE_ENHANCEMENTS[config.styleEnhancement]) {
+                enhancements.push(STYLE_ENHANCEMENTS[config.styleEnhancement]);
+            }
+            
+            return enhancements.filter(Boolean).join(', ');
+        }
+        
+        // 测试完整的配置传递
+        async function testNanoBananaConfig() {
+            const testBtn = document.getElementById('testBtn');
+            const result = document.getElementById('result');
+            const imageContainer = document.getElementById('imageContainer');
+            
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 测试中...';
+            result.innerHTML = '';
+            imageContainer.innerHTML = '';
+            
+            try {
+                log('🍌 开始测试 Nano Banana 完整配置传递');
+                
+                // 收集用户配置
+                const config = {
+                    apiKey: document.getElementById('apiKey').value.trim(),
+                    basePromptStyle: document.getElementById('basePromptStyle').value,
+                    styleEnhancement: document.getElementById('styleEnhancement').value,
+                    outputFormat: document.getElementById('outputFormat').value
+                };
+                
+                const altText = document.getElementById('altText').value.trim();
+                
+                log(`📋 用户配置: ${JSON.stringify(config, null, 2)}`);
+                log(`📝 原始提示词: "${altText}"`);
+                
+                // 模拟 buildEnhancedPrompt
+                const enhancedPrompt = buildEnhancedPrompt(altText, config);
+                log(`✨ 增强后的提示词: "${enhancedPrompt}"`);
+                
+                // 验证参数处理
+                if (!config.apiKey) {
+                    throw new Error('API Key 是必需的');
+                }
+                
+                if (!altText) {
+                    throw new Error('提示词是必需的');
+                }
+                
+                log('🔍 参数验证通过，准备调用后端API');
+                
+                // 调用后端API
+                const response = await fetch('/api/generate/nano-banana', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: config.apiKey,
+                        prompt: enhancedPrompt,
+                        outputFormat: config.outputFormat
+                    })
+                });
+                
+                log(`📡 API响应状态: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API调用失败 (${response.status}): ${errorText}`);
+                }
+                
+                const responseData = await response.json();
+                log(`📊 API响应: success=${responseData.success}, imageUrl长度=${responseData.imageUrl?.length || 0}`);
+                
+                if (responseData.success && responseData.imageUrl) {
+                    result.innerHTML = '<span class="text-green-600">✅ 配置传递测试成功!</span>';
+                    log('✅ 所有配置参数正确传递并生成图片');
+                    
+                    // 显示配置详情
+                    result.innerHTML += `<div class="mt-2 text-sm text-gray-600">
+                        <p><strong>基础风格:</strong> ${config.basePromptStyle || '无'} ${config.basePromptStyle ? '(' + BASE_PROMPT_STYLES[config.basePromptStyle].substring(0,30) + '...)' : ''}</p>
+                        <p><strong>主题风格:</strong> ${config.styleEnhancement || '无'} ${config.styleEnhancement ? '(' + STYLE_ENHANCEMENTS[config.styleEnhancement].substring(0,30) + '...)' : ''}</p>
+                        <p><strong>输出格式:</strong> ${responseData.format}</p>
+                        <p><strong>图片类型:</strong> ${responseData.mimeType}</p>
+                    </div>`;
+                    
+                    // 显示生成的图片
+                    const img = document.createElement('img');
+                    img.src = responseData.imageUrl;
+                    img.className = 'max-w-full h-auto border rounded-lg shadow-lg mt-4';
+                    img.alt = altText;
+                    img.onload = () => log('🖼️ 图片显示成功');
+                    img.onerror = () => log('❌ 图片显示失败');
+                    imageContainer.appendChild(img);
+                    
+                } else {
+                    throw new Error(responseData.error || '未返回图片数据');
+                }
+                
+            } catch (error) {
+                log(`❌ 测试失败: ${error.message}`);
+                result.innerHTML = `<span class="text-red-600">❌ ${error.message}</span>`;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🍌 测试完整配置传递';
+            }
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔄 Nano Banana 配置测试页面已加载');
+            log(`🌐 当前域名: ${window.location.origin}`);
+        });
+    </script>
+</body>
+</html>

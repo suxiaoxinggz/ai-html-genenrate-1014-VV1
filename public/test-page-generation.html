@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面生成流程测试 - Nano Banana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🔍 页面生成流程测试 - Nano Banana</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">步骤1: 设置 localStorage 配置</h2>
+            
+            <button onclick="setupNanoBananaConfig()" id="setupBtn" 
+                class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 mb-4">
+                🔧 设置 Nano Banana 配置到 localStorage
+            </button>
+            
+            <button onclick="checkNanoBananaConfig()" id="checkBtn" 
+                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 mb-4 ml-2">
+                🔍 检查 localStorage 配置
+            </button>
+            
+            <div id="configResult" class="mb-4"></div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">步骤2: 模拟页面生成中的 Nano Banana 调用</h2>
+            
+            <button onclick="testPageGeneration()" id="testPageBtn" 
+                class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 mb-4">
+                🍌 测试页面生成中的图片生成
+            </button>
+            
+            <div id="pageResult" class="mb-4"></div>
+            <div id="imageContainer"></div>
+        </div>
+        
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">📋 调试日志</h2>
+            <pre id="debugLog" class="text-xs bg-black text-green-400 p-4 rounded-lg h-64 overflow-y-auto"></pre>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logContainer = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.textContent += `[${timestamp}] ${message}\n`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+        
+        // 设置 localStorage 配置，模拟用户在主页面中的配置
+        function setupNanoBananaConfig() {
+            log('🔧 开始设置 Nano Banana 配置到 localStorage');
+            
+            const config = {
+                apiKey: 'AIzaSyDN2lwEGnpNqUZUQB21y8QGuM-PHN2KG8c',
+                basePromptStyle: 'photorealistic',
+                styleEnhancement: 'professional',
+                outputFormat: 'base64'
+            };
+            
+            localStorage.setItem('nanoBananaConfig', JSON.stringify(config));
+            log(`✅ 已保存 Nano Banana 配置: ${JSON.stringify(config, null, 2)}`);
+            
+            document.getElementById('configResult').innerHTML = 
+                '<span class="text-green-600">✅ Nano Banana 配置已保存到 localStorage</span>';
+        }
+        
+        // 检查 localStorage 配置
+        function checkNanoBananaConfig() {
+            log('🔍 检查 localStorage 中的 Nano Banana 配置');
+            
+            const configStr = localStorage.getItem('nanoBananaConfig');
+            if (configStr) {
+                const config = JSON.parse(configStr);
+                log(`✅ 找到配置: ${JSON.stringify(config, null, 2)}`);
+                
+                document.getElementById('configResult').innerHTML = 
+                    `<span class="text-green-600">✅ 找到配置</span><br><pre class="text-xs mt-2 bg-gray-100 p-2 rounded">${JSON.stringify(config, null, 2)}</pre>`;
+            } else {
+                log('❌ 未找到 nanoBananaConfig');
+                document.getElementById('configResult').innerHTML = 
+                    '<span class="text-red-600">❌ 未找到 nanoBananaConfig 在 localStorage 中</span>';
+            }
+        }
+        
+        // 模拟主页面生成流程中的图片生成
+        async function testPageGeneration() {
+            const testBtn = document.getElementById('testPageBtn');
+            const result = document.getElementById('pageResult');
+            const imageContainer = document.getElementById('imageContainer');
+            
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 测试中...';
+            result.innerHTML = '';
+            imageContainer.innerHTML = '';
+            
+            try {
+                log('🍌 开始模拟页面生成流程中的 Nano Banana 图片生成');
+                
+                // 步骤1: 模拟主页面中的配置加载逻辑 (src/index.tsx:1326-1342)
+                log('📋 步骤1: 加载配置 (模拟 src/index.tsx:1326-1342)');
+                
+                // 模拟 imageProvider 选择 
+                const imageProvider = 'nano-banana';
+                log(`🔧 图片提供商: ${imageProvider}`);
+                
+                // 模拟配置对象初始化
+                let modelConfig = {
+                    provider: imageProvider,
+                    model: 'gemini-2.5-flash-image-preview',
+                    imageApiKey: null,
+                    nanoBanana: null
+                };
+                
+                // 🔧 模拟主页面的 Nano Banana 配置加载逻辑 (第1326-1342行)
+                if (imageProvider === 'nano-banana') {
+                    try {
+                        const nanoBananaConfigStr = localStorage.getItem('nanoBananaConfig');
+                        if (nanoBananaConfigStr) {
+                            modelConfig.nanoBanana = JSON.parse(nanoBananaConfigStr);
+                            // 🔧 关键修复：确保 API Key 正确传递到 imageApiKey
+                            if (modelConfig.nanoBanana.apiKey && !modelConfig.imageApiKey) {
+                                modelConfig.imageApiKey = modelConfig.nanoBanana.apiKey;
+                            }
+                            log('✅ [Config] 已加载 Nano Banana 配置: ' + JSON.stringify(modelConfig.nanoBanana));
+                        } else {
+                            log('⚠️ [Config] localStorage 中未找到 Nano Banana 配置');
+                        }
+                    } catch (error) {
+                        log('❌ [Config] 加载 Nano Banana 配置失败: ' + error.message);
+                    }
+                }
+                
+                log(`🔍 最终配置对象: ${JSON.stringify(modelConfig, null, 2)}`);
+                
+                // 步骤2: 模拟 generateImageWithNanoBanana 调用 (src/index.tsx:5762-5830)
+                log('📋 步骤2: 调用 generateImageWithNanoBanana');
+                
+                const altText = 'A professional coffee shop with modern design';
+                log(`📝 Alt文本: ${altText}`);
+                
+                const imageUrl = await generateImageWithNanoBanana(altText, modelConfig);
+                
+                log('✅ 图片生成成功!');
+                result.innerHTML = '<span class="text-green-600">✅ 页面生成流程测试成功！</span>';
+                
+                // 显示生成的图片
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.className = 'max-w-full h-auto border rounded-lg shadow-lg mt-4';
+                img.alt = altText;
+                img.onload = () => log('🖼️ 图片显示成功');
+                img.onerror = () => log('❌ 图片显示失败');
+                imageContainer.appendChild(img);
+                
+            } catch (error) {
+                log(`❌ 测试失败: ${error.message}`);
+                log(`❌ 错误堆栈: ${error.stack}`);
+                result.innerHTML = `<span class="text-red-600">❌ ${error.message}</span>`;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🍌 测试页面生成中的图片生成';
+            }
+        }
+        
+        // 🔧 模拟 generateImageWithNanoBanana 函数 (src/index.tsx:5762-5830)
+        async function generateImageWithNanoBanana(altText, imageConfig) {
+            log('🍌 [Nano Banana] 开始图片生成: ' + altText.substring(0, 50));
+            log('🔍 [Nano Banana] 环境信息: ' + JSON.stringify({
+                userAgent: navigator.userAgent.substring(0, 50),
+                origin: window.location.origin,
+                timestamp: new Date().toISOString()
+            }));
+            
+            // 使用统一配置中的 nanoBanana 配置
+            let nanoBananaConfig;
+            
+            // 🔧 修复：改进配置获取逻辑，支持多种配置结构 (src/index.tsx:5773-5804)
+            log('🔍 [Nano Banana] 调试 imageConfig 结构: ' + JSON.stringify({
+                hasNanoBanana: !!imageConfig.nanoBanana,
+                hasApiKey: !!imageConfig.apiKey,
+                hasProvider: imageConfig.provider,
+                configKeys: Object.keys(imageConfig),
+                fullConfig: imageConfig
+            }));
+            
+            if (imageConfig.nanoBanana) {
+                // 使用统一配置中的完整配置
+                nanoBananaConfig = {
+                    apiKey: imageConfig.nanoBanana.apiKey || imageConfig.apiKey,
+                    basePromptStyle: imageConfig.nanoBanana.basePromptStyle || '',
+                    styleEnhancement: imageConfig.nanoBanana.styleEnhancement || '',
+                    outputFormat: imageConfig.outputFormat || imageConfig.nanoBanana.outputFormat || 'base64'
+                };
+            } else {
+                // 降级到基本配置（使用 apiKey）
+                const apiKey = imageConfig.apiKey || imageConfig.key || imageConfig.token;
+                if (!apiKey) {
+                    log('❌ [Nano Banana] imageConfig 中未找到 API key: ' + JSON.stringify(imageConfig));
+                    throw new Error('Nano Banana requires API key. Please configure it in the modal or check your configuration.');
+                }
+                nanoBananaConfig = {
+                    apiKey: apiKey,
+                    basePromptStyle: '',
+                    styleEnhancement: '',
+                    outputFormat: imageConfig.outputFormat || 'base64'
+                };
+            }
+            
+            log('🔍 [Nano Banana] 最终配置: ' + JSON.stringify({
+                hasApiKey: !!nanoBananaConfig.apiKey,
+                apiKeyLength: nanoBananaConfig.apiKey?.length || 0,
+                basePromptStyle: nanoBananaConfig.basePromptStyle,
+                styleEnhancement: nanoBananaConfig.styleEnhancement,
+                outputFormat: nanoBananaConfig.outputFormat
+            }));
+            
+            // 构建增强提示词
+            const enhancements = [];
+            enhancements.push(altText);
+            
+            const BASE_PROMPT_STYLES = {
+                'photorealistic': 'photorealistic editorial photo, natural daylight, 50–85mm look, gentle depth of field, true-to-life color'
+            };
+            const STYLE_ENHANCEMENTS = {
+                'professional': 'neutral palette, balanced composition, soft frontal lighting, crisp detail'
+            };
+            
+            if (nanoBananaConfig.basePromptStyle && BASE_PROMPT_STYLES[nanoBananaConfig.basePromptStyle]) {
+                enhancements.push(BASE_PROMPT_STYLES[nanoBananaConfig.basePromptStyle]);
+            }
+            
+            if (nanoBananaConfig.styleEnhancement && STYLE_ENHANCEMENTS[nanoBananaConfig.styleEnhancement]) {
+                enhancements.push(STYLE_ENHANCEMENTS[nanoBananaConfig.styleEnhancement]);
+            }
+            
+            const enhancedPrompt = enhancements.filter(Boolean).join(', ');
+            log('✨ 增强后的提示词: "' + enhancedPrompt + '"');
+            
+            // 调用后端API
+            log('🚀 [Nano Banana] 调用 NanoBananaService.generateImage...');
+            
+            const response = await fetch('/api/generate/nano-banana', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    apiKey: nanoBananaConfig.apiKey,
+                    prompt: enhancedPrompt,
+                    outputFormat: nanoBananaConfig.outputFormat || 'base64'
+                })
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                log(`❌ API 响应错误 (${response.status}): ${errorText}`);
+                throw new Error(`Image generation failed: ${response.status} - ${errorText}`);
+            }
+            
+            const result = await response.json();
+            log('📊 API 响应: ' + JSON.stringify({
+                success: result.success,
+                hasImageUrl: !!result.imageUrl,
+                imageUrlLength: result.imageUrl?.length || 0,
+                error: result.error
+            }));
+            
+            if (!result.success || !result.imageUrl) {
+                throw new Error(result.error || 'No image data received');
+            }
+            
+            log('✅ [Nano Banana] 成功通过后端代理生成图片');
+            return result.imageUrl;
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔄 页面生成测试页面已加载');
+            log(`🌐 当前域名: ${window.location.origin}`);
+            log('💡 请先点击"设置 Nano Banana 配置"，然后点击"测试页面生成"');
+        });
+    </script>
+</body>
+</html>

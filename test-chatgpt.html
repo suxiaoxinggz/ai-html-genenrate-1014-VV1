@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT 集成测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>ChatGPT 集成测试页面</h1>
+    
+    <button id="testChatGPTModal" onclick="testModalFunction()">测试ChatGPT模态框</button>
+    
+    <div id="results">
+        <h2>测试结果：</h2>
+        <ul id="testResults"></ul>
+    </div>
+
+    <script>
+        function addTestResult(message, success = true) {
+            const ul = document.getElementById('testResults');
+            const li = document.createElement('li');
+            li.textContent = message;
+            li.style.color = success ? 'green' : 'red';
+            ul.appendChild(li);
+        }
+
+        function testModalFunction() {
+            addTestResult('开始测试 ChatGPT 模态框功能...');
+            
+            // 测试1: 检查服务器基本响应
+            axios.get('/')
+                .then(() => {
+                    addTestResult('✓ 服务器响应正常');
+                    
+                    // 测试2: 检查生成API端点
+                    return axios.post('/api/generate', {
+                        userPrompt: 'Test ChatGPT integration',
+                        pageConfig: {
+                            title: 'ChatGPT测试页面',
+                            pageType: 'business',
+                            themeColor: '#3B82F6'
+                        },
+                        modelConfig: {
+                            textModelProvider: 'test',
+                            imageModelProvider: 'chatgpt',
+                            imageModelName: 'gpt-image-1'
+                        }
+                    });
+                })
+                .then((response) => {
+                    if (response.data.success) {
+                        addTestResult('✓ ChatGPT集成API端点响应正常');
+                    } else {
+                        addTestResult('✗ API端点返回错误: ' + response.data.error, false);
+                    }
+                })
+                .catch((error) => {
+                    if (error.response && error.response.data) {
+                        if (error.response.data.error.includes('requires API key')) {
+                            addTestResult('✓ ChatGPT API key验证正常工作');
+                        } else {
+                            addTestResult('✗ API错误: ' + error.response.data.error, false);
+                        }
+                    } else {
+                        addTestResult('✗ 网络错误: ' + error.message, false);
+                    }
+                })
+                .finally(() => {
+                    addTestResult('ChatGPT 模态框测试完成');
+                });
+        }
+    </script>
+</body>
+</html>

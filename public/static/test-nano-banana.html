@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 Nano Banana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🍌 Nano Banana 测试</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">配置测试</h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">API Key:</label>
+                <input type="text" id="apiKey" placeholder="输入你的 Gemini API Key" 
+                    class="w-full px-3 py-2 border rounded-lg">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">提示词:</label>
+                <input type="text" id="prompt" value="A cute banana wearing sunglasses" 
+                    class="w-full px-3 py-2 border rounded-lg">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">输出格式:</label>
+                <select id="outputFormat" class="px-3 py-2 border rounded-lg">
+                    <option value="base64">Base64</option>
+                    <option value="url">URL</option>
+                </select>
+            </div>
+            
+            <button onclick="testNanoBanana()" id="testBtn" 
+                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                🍌 测试生成图片
+            </button>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">结果</h2>
+            <div id="result" class="text-gray-500">等待测试...</div>
+            <div id="imageContainer" class="mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testNanoBanana() {
+            const apiKey = document.getElementById('apiKey').value;
+            const prompt = document.getElementById('prompt').value;
+            const outputFormat = document.getElementById('outputFormat').value;
+            const testBtn = document.getElementById('testBtn');
+            const result = document.getElementById('result');
+            const imageContainer = document.getElementById('imageContainer');
+            
+            if (!apiKey.trim()) {
+                result.textContent = '❌ 请先输入 API Key';
+                result.className = 'text-red-600';
+                return;
+            }
+            
+            if (!prompt.trim()) {
+                result.textContent = '❌ 请输入提示词';
+                result.className = 'text-red-600';
+                return;
+            }
+            
+            // 显示加载状态
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 生成中...';
+            result.textContent = '🔄 正在生成图片...';
+            result.className = 'text-blue-600';
+            imageContainer.innerHTML = '';
+            
+            try {
+                console.log('🍌 开始测试 Nano Banana');
+                console.log('🌐 当前 URL:', window.location.origin);
+                
+                const response = await fetch(`${window.location.origin}/api/generate/nano-banana`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        prompt: prompt,
+                        outputFormat: outputFormat
+                    })
+                });
+                
+                console.log('📡 API 响应状态:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API请求失败 (${response.status}): ${errorText}`);
+                }
+                
+                const responseData = await response.json();
+                console.log('📊 API 响应数据:', responseData);
+                
+                if (responseData.success && responseData.imageUrl) {
+                    result.innerHTML = `✅ 成功生成图片! (格式: ${responseData.format})`;
+                    result.className = 'text-green-600';
+                    
+                    // 显示图片
+                    const img = document.createElement('img');
+                    img.src = responseData.imageUrl;
+                    img.className = 'max-w-full h-auto border rounded-lg shadow-lg';
+                    img.alt = prompt;
+                    imageContainer.appendChild(img);
+                    
+                } else {
+                    throw new Error(responseData.error || '生成失败，未返回图片数据');
+                }
+                
+            } catch (error) {
+                console.error('❌ Nano Banana 测试错误:', error);
+                result.textContent = `❌ 测试失败: ${error.message}`;
+                result.className = 'text-red-600';
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '🍌 测试生成图片';
+            }
+        }
+    </script>
+</body>
+</html>
