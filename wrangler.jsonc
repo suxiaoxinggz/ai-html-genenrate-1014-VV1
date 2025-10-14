@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "ai-html-generator-v9",
+  "name": "ai-html-generator-vv1",
   "compatibility_date": "2024-09-26",
   "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "./dist",
