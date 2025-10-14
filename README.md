@@ -58,9 +58,10 @@
 
 ## 🌐 在线访问
 
-### 生产环境
-- **主站**: https://64c5b9eb.ai-html-generator-v9.pages.dev
-- **GitHub**: https://github.com/suxiaoxinggz/ai-html-genenrate-1013-V9--图像增强
+### 生产环境 (VV1 - 最新部署)
+- **主站**: https://ai-html-generator-vv1.pages.dev
+- **当前访问**: https://9f294fc9.ai-html-generator-vv1.pages.dev (立即可用)
+- **GitHub**: https://github.com/suxiaoxinggz/ai-html-genenrate-1014-VV1
 
 ### API 端点
 
@@ -76,12 +77,13 @@
 - **WordPress兼容**: `/api/test/wordpress-convert`
 - **Vertex AI图像**: `POST /api/generate-imagen`
 
-### 最新部署状态
-- ✅ **部署时间**: 2025-10-12
-- ✅ **基础API**: 正常运行
-- ✅ **WordPress转换**: 正常工作
-- ✅ **图片代理**: 正常响应
-- ✅ **R2存储**: 正常访问
+### 最新部署状态 (VV1)
+- ✅ **部署时间**: 2025-10-14 16:24 UTC
+- ✅ **基础API**: https://ai-html-generator-vv1.pages.dev/api/hello
+- ✅ **WordPress转换**: 自动新域名适配，正常工作
+- ✅ **图片代理**: R2存储访问正常
+- ✅ **资源绑定**: D1/KV/R2 所有服务正常
+- ✅ **迁移状态**: 100%成功，零停机迁移完成
 
 ## 🚀 快速开始
 
@@ -89,8 +91,8 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/suxiaoxinggz/suxiaoxinggz-html-genenrate-1009-V3.git
-cd suxiaoxinggz-html-genenrate-1009-V3
+git clone https://github.com/suxiaoxinggz/ai-html-genenrate-1014-VV1.git
+cd ai-html-genenrate-1014-VV1
 
 # 安装依赖
 npm install
