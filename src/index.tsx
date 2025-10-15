@@ -9964,29 +9964,7 @@ async function handleOpenAICompatibleResponse(response: Response, env: Cloudflar
   }
 }
 
-// 🔧 兼容性更新任务状态函数
-async function updateTaskStatus(env: CloudflareBindings, taskId: string, status: string, options: any = {}): Promise<void> {
-  try {
-    // 尝试使用KV存储更新状态
-    const currentData = await env.JOBS?.get(taskId)
-    const taskData = currentData ? JSON.parse(currentData) : {}
-    
-    const updatedData = {
-      ...taskData,
-      status,
-      progress: options.progress || taskData.progress || 0,
-      message: options.message || taskData.message,
-      updatedAt: new Date().toISOString()
-    }
-    
-    await env.JOBS?.put(taskId, JSON.stringify(updatedData))
-    
-    console.log(`📊 [Status] ${taskId}: ${status} (${options.progress || 0}%) - ${options.message || ''}`)
-  } catch (error) {
-    console.warn('更新任务状态失败:', error)
-    // 静默失败，不中断主要流程
-  }
-}
+
 
 // 📋 处理OpenAI兼容模式普通响应 - 增强图像生成逻辑
 async function handleOpenAINormalResponse(response: Response, env: CloudflareBindings, taskId: string, startTime: number) {
