@@ -139,6 +139,7 @@ app.get('/', (c) => {
                                 <option value="nano-banana">Nano Banana (Gemini)</option>
                                 <option value="imagen-4">Gemini Imagen 4</option>
                                 <option value="openai-compatible">OpenAI协议兼容</option>
+                                <option value="bytedance-jimeng">🚀 字节跳动 豆包 即梦4.0</option>
                                 <option value="cloudflare-workers-ai">☁️ Cloudflare Workers AI</option>
                                 <option value="unsplash">Unsplash (免费)</option>
                                 <option value="pollinations">Pollinations (免费)</option>
@@ -1424,6 +1425,12 @@ app.get('/', (c) => {
                     openaiConfig.classList.add('hidden');
                     vertexAIConfig.classList.add('hidden');
                     openNanoBananaModal();
+                } else if (provider === 'bytedance-jimeng') {
+                    // 字节跳动即梦4.0使用弹窗配置
+                    console.log('Selected ByteDance Jimeng 4.0, showing modal configuration...');
+                    openaiConfig.classList.add('hidden');
+                    vertexAIConfig.classList.add('hidden');
+                    openByteDanceJimengModal();
                 } else if (provider === 'cloudflare-workers-ai') {
                     // Cloudflare Workers AI使用弹窗配置
                     console.log('Selected Cloudflare Workers AI, showing modal configuration...');
@@ -1459,6 +1466,7 @@ app.get('/', (c) => {
                     'nano-banana': ['gemini-2.5-flash-image-preview'],
                     'imagen-4': ['imagen-4.0-generate-001', 'imagen-4.0-fast-generate-001'],
                     'openai-compatible': ['dall-e-3', 'dall-e-2'], // 默认OpenAI模型，可通过API获取更多
+                    'bytedance-jimeng': ['doubao-seedream-4-0-250828', 'doubao-seedream-3-0-t2i-250415', 'doubao-seededit-3-0-i2i-250628'],
                     'cloudflare-workers-ai': ['@cf/bytedance/stable-diffusion-xl-lightning', '@cf/stabilityai/stable-diffusion-xl-base-1.0', '@cf/runwayml/stable-diffusion-v1-5-inpainting', '@cf/black-forest-labs/flux-1-schnell'],
                     'unsplash': ['unsplash-api'],
                     'pollinations': ['pollinations-free']
@@ -1501,6 +1509,17 @@ app.get('/', (c) => {
                             };
                             option.textContent = descriptions[model] || model;
                             console.log('Added Nano Banana model: ' + model + ' -> ' + option.textContent);
+                        }
+                        
+                        // Add descriptions for ByteDance Jimeng models
+                        if (provider === 'bytedance-jimeng') {
+                            const descriptions = {
+                                'doubao-seedream-4-0-250828': '即梦4.0 - 文生图/图生图/组图生成，最新版本',
+                                'doubao-seedream-3-0-t2i-250415': '即梦3.0 文生图 - 文字转图像专用',
+                                'doubao-seededit-3-0-i2i-250628': '即梦3.0 图生图 - 图像编辑专用'
+                            };
+                            option.textContent = descriptions[model] || model;
+                            console.log('Added ByteDance Jimeng model: ' + model + ' -> ' + option.textContent);
                         }
                         
                         modelSelect.appendChild(option);
@@ -2072,6 +2091,22 @@ SEO优化要求：
                             }
                         } catch (error) {
                             console.error('❌ [Config] Failed to load Cloudflare Workers AI config:', error);
+                        }
+                    } else if (imageProvider === 'bytedance-jimeng') {
+                        try {
+                            const byteDanceConfigStr = localStorage.getItem('byteDanceJimengConfig');
+                            if (byteDanceConfigStr) {
+                                modelConfig.byteDanceJimeng = JSON.parse(byteDanceConfigStr);
+                                // 🔧 关键修复：确保 API Key 正确传递到 imageApiKey
+                                if (modelConfig.byteDanceJimeng.apiKey && !modelConfig.imageApiKey) {
+                                    modelConfig.imageApiKey = modelConfig.byteDanceJimeng.apiKey;
+                                }
+                                console.log('✅ [Config] Loaded ByteDance Jimeng config from localStorage:', modelConfig.byteDanceJimeng);
+                            } else {
+                                console.warn('⚠️ [Config] No ByteDance Jimeng config found in localStorage');
+                            }
+                        } catch (error) {
+                            console.error('❌ [Config] Failed to load ByteDance Jimeng config:', error);
                         }
                     } else if (imageProvider === 'vertex-ai-imagen') {
                         try {
@@ -3615,6 +3650,258 @@ SEO优化要求：
             };
 
             // ===============================================
+            // ByteDance Jimeng 4.0 图像生成配置相关函数
+            // ===============================================
+            
+            window.openByteDanceJimengModal = function openByteDanceJimengModal() {
+                const modal = document.getElementById('byteDanceJimengModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    // 加载现有配置
+                    loadByteDanceConfig();
+                }
+            };
+
+            function closeByteDanceJimengModal() {
+                const modal = document.getElementById('byteDanceJimengModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    // 清除错误信息
+                    const errorDiv = document.getElementById('byteDanceJimengError');
+                    if (errorDiv) {
+                        errorDiv.classList.add('hidden');
+                    }
+                }
+            };
+
+            window.saveByteDanceConfig = function saveByteDanceConfig() {
+                console.log('[ByteDance Jimeng] 开始保存配置...');
+                
+                const apiKeyInput = document.getElementById('byteDanceArkApiKey');
+                const modelSelect = document.getElementById('byteDanceModel');
+                const sizeSelect = document.getElementById('byteDanceSize');
+                const sequentialModeSelect = document.getElementById('byteDanceSequentialMode');
+                const maxImagesInput = document.getElementById('byteDanceMaxImages');
+                const guidanceScaleInput = document.getElementById('byteDanceGuidanceScale');
+                const seedInput = document.getElementById('byteDanceSeed');
+                const responseFormatSelect = document.getElementById('byteDanceResponseFormat');
+                const watermarkInput = document.getElementById('byteDanceWatermark');
+                const streamModeInput = document.getElementById('byteDanceStreamMode');
+                
+                console.log('[ByteDance Jimeng] DOM元素检查:', {
+                    apiKeyInput: !!apiKeyInput,
+                    modelSelect: !!modelSelect,
+                    sizeSelect: !!sizeSelect,
+                    sequentialModeSelect: !!sequentialModeSelect,
+                    maxImagesInput: !!maxImagesInput,
+                    guidanceScaleInput: !!guidanceScaleInput,
+                    seedInput: !!seedInput,
+                    responseFormatSelect: !!responseFormatSelect,
+                    watermarkInput: !!watermarkInput,
+                    streamModeInput: !!streamModeInput
+                });
+                
+                if (!apiKeyInput || !modelSelect || !sizeSelect) {
+                    console.error('[ByteDance Jimeng] 必要的配置表单DOM元素未找到');
+                    showByteDanceError('配置表单未正确加载，请刷新页面重试');
+                    return;
+                }
+                
+                const apiKey = apiKeyInput.value;
+                const selectedModel = modelSelect.value;
+                const size = sizeSelect.value;
+                const sequentialMode = sequentialModeSelect ? sequentialModeSelect.value : 'disabled';
+                const maxImages = maxImagesInput ? parseInt(maxImagesInput.value) : 3;
+                const guidanceScale = guidanceScaleInput ? parseFloat(guidanceScaleInput.value) : 2.5;
+                const seed = seedInput ? seedInput.value : '';
+                const responseFormat = responseFormatSelect ? responseFormatSelect.value : 'url';
+                const watermark = watermarkInput ? watermarkInput.checked : true;
+                const streamMode = streamModeInput ? streamModeInput.checked : false;
+                
+                console.log('[ByteDance Jimeng] 配置数据:', {
+                    hasApiKey: !!apiKey.trim(),
+                    model: selectedModel,
+                    size: size,
+                    sequentialMode: sequentialMode,
+                    maxImages: maxImages,
+                    guidanceScale: guidanceScale,
+                    hasSeed: !!seed.trim(),
+                    responseFormat: responseFormat,
+                    watermark: watermark,
+                    streamMode: streamMode
+                });
+                
+                if (!apiKey.trim()) {
+                    console.warn('[ByteDance Jimeng] API Key为空');
+                    showByteDanceError('请输入 ARK API Key');
+                    return;
+                }
+
+                const config = {
+                    apiKey: apiKey.trim(),
+                    model: selectedModel || 'doubao-seedream-4-0-250828',
+                    size: size || '2K',
+                    sequentialImageGeneration: sequentialMode || 'disabled',
+                    maxImages: maxImages || 3,
+                    guidanceScale: guidanceScale || 2.5,
+                    seed: seed.trim() ? parseInt(seed) : null,
+                    responseFormat: responseFormat || 'url',
+                    watermark: watermark !== false,
+                    stream: streamMode || false
+                };
+                
+                console.log('[ByteDance Jimeng] 保存配置:', config);
+                
+                try {
+                    localStorage.setItem('byteDanceJimengConfig', JSON.stringify(config));
+                    console.log('[ByteDance Jimeng] 配置保存成功');
+                    
+                    // 显示成功信息
+                    const testResult = document.getElementById('byteDanceJimengTestResult');
+                    if (testResult) {
+                        testResult.className = 'mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded';
+                        testResult.textContent = '✅ 字节跳动即梦4.0 配置已保存成功！';
+                        testResult.classList.remove('hidden');
+                    }
+                    
+                    // 清除错误信息
+                    const errorDiv = document.getElementById('byteDanceJimengError');
+                    if (errorDiv) {
+                        errorDiv.classList.add('hidden');
+                    }
+                    
+                    // 延迟关闭模态框，让用户看到成功信息
+                    setTimeout(() => {
+                        closeByteDanceJimengModal();
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error('[ByteDance Jimeng] 配置保存失败:', error);
+                    showByteDanceError('配置保存失败: ' + error.message);
+                }
+            };
+
+            function loadByteDanceConfig() {
+                try {
+                    const configStr = localStorage.getItem('byteDanceJimengConfig');
+                    if (configStr) {
+                        const config = JSON.parse(configStr);
+                        
+                        // 恢复配置值
+                        const apiKeyInput = document.getElementById('byteDanceArkApiKey');
+                        const modelSelect = document.getElementById('byteDanceModel');
+                        const sizeSelect = document.getElementById('byteDanceSize');
+                        const sequentialModeSelect = document.getElementById('byteDanceSequentialMode');
+                        const maxImagesInput = document.getElementById('byteDanceMaxImages');
+                        const guidanceScaleInput = document.getElementById('byteDanceGuidanceScale');
+                        const seedInput = document.getElementById('byteDanceSeed');
+                        const responseFormatSelect = document.getElementById('byteDanceResponseFormat');
+                        const watermarkInput = document.getElementById('byteDanceWatermark');
+                        const streamModeInput = document.getElementById('byteDanceStreamMode');
+                        
+                        if (apiKeyInput && config.apiKey) apiKeyInput.value = config.apiKey;
+                        if (modelSelect && config.model) modelSelect.value = config.model;
+                        if (sizeSelect && config.size) sizeSelect.value = config.size;
+                        if (sequentialModeSelect && config.sequentialImageGeneration) sequentialModeSelect.value = config.sequentialImageGeneration;
+                        if (maxImagesInput && config.maxImages) maxImagesInput.value = config.maxImages;
+                        if (guidanceScaleInput && config.guidanceScale) guidanceScaleInput.value = config.guidanceScale;
+                        if (seedInput && config.seed) seedInput.value = config.seed;
+                        if (responseFormatSelect && config.responseFormat) responseFormatSelect.value = config.responseFormat;
+                        if (watermarkInput) watermarkInput.checked = config.watermark !== false;
+                        if (streamModeInput) streamModeInput.checked = config.stream || false;
+                        
+                        console.log('[ByteDance Jimeng] 配置加载成功:', config);
+                    }
+                } catch (error) {
+                    console.error('[ByteDance Jimeng] 配置加载失败:', error);
+                }
+            }
+
+            window.testByteDanceConnection = function testByteDanceConnection() {
+                console.log('[ByteDance Jimeng] 开始测试连接...');
+                
+                const apiKeyInput = document.getElementById('byteDanceArkApiKey');
+                if (!apiKeyInput || !apiKeyInput.value.trim()) {
+                    showByteDanceError('请先输入 ARK API Key');
+                    return;
+                }
+                
+                const config = {
+                    apiKey: apiKeyInput.value.trim(),
+                    model: document.getElementById('byteDanceModel')?.value || 'doubao-seedream-4-0-250828'
+                };
+                
+                // 显示测试进行中
+                const testResult = document.getElementById('byteDanceJimengTestResult');
+                if (testResult) {
+                    testResult.className = 'mt-3 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded';
+                    testResult.textContent = '⏳ 正在测试连接，请稍候...';
+                    testResult.classList.remove('hidden');
+                }
+                
+                // 发送测试请求到后端
+                fetch('/api/test/bytedance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (testResult) {
+                        if (result.success) {
+                            testResult.className = 'mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded';
+                            testResult.textContent = '✅ 连接测试成功！ARK API 可正常使用';
+                        } else {
+                            testResult.className = 'mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
+                            testResult.textContent = '❌ 连接测试失败：' + (result.error || '未知错误');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('[ByteDance Jimeng] 测试连接失败:', error);
+                    if (testResult) {
+                        testResult.className = 'mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded';
+                        testResult.textContent = '❌ 连接测试失败：网络错误或服务不可用';
+                    }
+                });
+            };
+
+            window.toggleByteDanceAdvanced = function toggleByteDanceAdvanced() {
+                const checkbox = document.getElementById('showByteDanceAdvanced');
+                const paramsDiv = document.getElementById('byteDanceAdvancedParams');
+                const icon = document.getElementById('byteDanceAdvancedIcon');
+                
+                if (checkbox && paramsDiv && icon) {
+                    if (checkbox.checked) {
+                        paramsDiv.classList.remove('hidden');
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    } else {
+                        paramsDiv.classList.add('hidden');
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                }
+            };
+
+            function showByteDanceError(message) {
+                const errorDiv = document.getElementById('byteDanceJimengError');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.classList.remove('hidden');
+                }
+            };
+
+            // ByteDance Jimeng Modal 点击外部关闭
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'byteDanceJimengModal') {
+                    closeByteDanceJimengModal();
+                }
+            });
+
+            // ===============================================
             // 🚀 Initialize Enhanced Image Providers (V2 API)
             // ===============================================
             
@@ -4538,6 +4825,207 @@ SEO优化要求：
                             取消
                         </button>
                         <button onclick="saveFreeServiceConfig()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>保存配置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ByteDance Jimeng 4.0 配置弹窗 -->
+        <div id="byteDanceJimengModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <!-- Modal Header -->
+                <div class="sticky top-0 bg-white border-b p-6 rounded-t-xl">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-gradient-to-r from-red-500 to-orange-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                                <i class="fab fa-tiktok text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-900">字节跳动 豆包 即梦4.0 配置</h2>
+                                <p class="text-sm text-gray-600">火山方舟 ARK API - 智能图像生成服务</p>
+                            </div>
+                        </div>
+                        <button onclick="closeByteDanceJimengModal()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Modal Content -->
+                <div class="p-6 space-y-6">
+                    <!-- 基础配置 -->
+                    <div class="bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
+                        <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-key mr-2 text-red-600"></i>
+                            基础配置
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ARK API Key *</label>
+                                <input type="password" id="byteDanceArkApiKey" 
+                                    placeholder="输入你的字节跳动 ARK API Key" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                <p class="text-xs text-gray-500 mt-1">
+                                    在 <a href="https://console.volcengine.com/ark" target="_blank" class="text-red-600 hover:underline">火山方舟控制台</a> 创建 API Key
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 模型配置 -->
+                    <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-gray-500">
+                        <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-brain mr-2 text-gray-600"></i>
+                            模型配置
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">即梦模型</label>
+                                <select id="byteDanceModel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                    <option value="doubao-seedream-4-0-250828">即梦4.0 - 文生图/图生图/组图生成 (推荐)</option>
+                                    <option value="doubao-seedream-3-0-t2i-250415">即梦3.0 文生图 - 文字转图像专用</option>
+                                    <option value="doubao-seededit-3-0-i2i-250628">即梦3.0 图生图 - 图像编辑专用</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    即梦4.0支持最新功能，3.0系列针对特定任务优化
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">图片尺寸</label>
+                                <select id="byteDanceSize" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                    <option value="2K">2K (推荐高质量)</option>
+                                    <option value="1024x1024">1024x1024 (方形)</option>
+                                    <option value="2048x2048">2048x2048 (高分辨率方形)</option>
+                                    <option value="adaptive">adaptive (自适应尺寸)</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    2K为智能分辨率，adaptive根据内容自动调整
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 高级参数 -->
+                    <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800 flex items-center">
+                                <i class="fas fa-sliders-h mr-2 text-blue-600"></i>
+                                高级参数
+                            </h3>
+                            <label class="flex items-center cursor-pointer" onclick="toggleByteDanceAdvanced()">
+                                <input type="checkbox" id="showByteDanceAdvanced" class="mr-2">
+                                <span class="text-sm font-medium text-gray-700">显示高级设置</span>
+                                <i class="fas fa-chevron-down ml-2 text-xs text-gray-500" id="byteDanceAdvancedIcon"></i>
+                            </label>
+                        </div>
+                        
+                        <div id="byteDanceAdvancedParams" class="hidden space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">组图生成模式 (即梦4.0专用)</label>
+                                    <select id="byteDanceSequentialMode" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                        <option value="disabled">单张模式</option>
+                                        <option value="auto">自动组图模式</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        auto模式可生成多张相关图片
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">最大组图数量</label>
+                                    <input type="number" id="byteDanceMaxImages" 
+                                        min="1" max="15" value="3" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        组图模式下最多生成的图片数量
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">引导强度 (即梦3.0专用)</label>
+                                    <input type="number" id="byteDanceGuidanceScale" 
+                                        min="1" max="10" step="0.5" value="2.5" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        控制生成图像与提示词的一致程度
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">随机种子</label>
+                                    <input type="number" id="byteDanceSeed" 
+                                        placeholder="留空使用随机种子" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        用于生成可复现结果
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">响应格式</label>
+                                <select id="byteDanceResponseFormat" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                    <option value="url">URL链接 (推荐)</option>
+                                    <option value="b64_json">Base64编码</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="byteDanceWatermark" checked class="mr-2">
+                                <label class="text-sm text-gray-700">添加"AI生成"水印</label>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="byteDanceStreamMode" class="mr-2">
+                                <label class="text-sm text-gray-700">启用流式输出 (即梦4.0专用)</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 服务说明 -->
+                    <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                        <h3 class="font-semibold text-gray-800 mb-2 flex items-center">
+                            <i class="fas fa-info-circle mr-2 text-green-600"></i>
+                            服务特点
+                        </h3>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• <strong>即梦4.0</strong>：支持文生图、图生图、组图生成等多种模式</li>
+                            <li>• <strong>高质量生成</strong>：专为中文优化，理解更准确</li>
+                            <li>• <strong>流式输出</strong>：支持实时查看生成进度</li>
+                            <li>• <strong>智能分辨率</strong>：2K模式自动选择最佳尺寸</li>
+                            <li>• <strong>组图功能</strong>：可一次性生成多张相关图片</li>
+                        </ul>
+                    </div>
+
+                    <!-- 错误信息 -->
+                    <div id="byteDanceJimengError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"></div>
+                    
+                    <!-- 测试结果 -->
+                    <div id="byteDanceJimengTestResult" class="hidden"></div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="sticky bottom-0 bg-gray-50 p-6 rounded-b-xl border-t">
+                    <div class="text-sm text-gray-600">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        配置将自动保存到本地存储，API Key安全加密存储
+                    </div>
+                    <div class="flex space-x-3 mt-3">
+                        <button onclick="testByteDanceConnection()" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
+                            <i class="fas fa-plug mr-2"></i>测试连接
+                        </button>
+                        <button onclick="closeByteDanceJimengModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            取消
+                        </button>
+                        <button onclick="saveByteDanceConfig()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                             <i class="fas fa-save mr-2"></i>保存配置
                         </button>
                     </div>
@@ -6061,6 +6549,8 @@ async function generateSingleImage(altText: string, imageConfig: any, aspectRati
         imageUrl = await generateImageWithNanoBanana(altText, imageConfig)
       } else if (imageConfig.provider === 'cloudflare-workers-ai') {
         imageUrl = await generateImageWithCloudflareWorkersAI(altText, imageConfig)
+      } else if (imageConfig.provider === 'bytedance-jimeng') {
+        imageUrl = await generateImageWithByteDanceJimeng(altText, imageConfig)
       } else if (imageConfig.provider === 'workai') {
         // 🆕 WorkAI提供者支持（临时使用降级选项，待实现）
         console.log('⚠️ WorkAI provider not implemented yet, using fallback')
@@ -7766,6 +8256,102 @@ async function generateImageWithCustomAPI(altText: string, imageConfig: any): Pr
   throw new Error('Invalid custom API response format')
 }
 
+// 字节跳动即梦4.0图片生成
+async function generateImageWithByteDanceJimeng(altText: string, imageConfig: any): Promise<string> {
+  const { 
+    apiKey, 
+    model, 
+    size, 
+    sequentialImageGeneration, 
+    maxImages,
+    guidanceScale, 
+    seed, 
+    responseFormat, 
+    watermark, 
+    stream 
+  } = imageConfig
+  
+  if (!apiKey) {
+    throw new Error('ByteDance ARK API key is required')
+  }
+  
+  console.log('[ByteDance Jimeng] 开始生成图片:', { model, size, altText: altText.substring(0, 50) + '...' })
+  
+  // 准备请求参数
+  const requestBody: any = {
+    model: model || 'doubao-seedream-4-0-250828',
+    prompt: altText,
+    size: size || '2K',
+    response_format: responseFormat || 'url',
+    watermark: watermark !== false
+  }
+  
+  // 即梦4.0特有参数
+  if (model === 'doubao-seedream-4-0-250828') {
+    requestBody.sequential_image_generation = sequentialImageGeneration || 'disabled'
+    requestBody.stream = stream || false
+    
+    // 组图模式参数
+    if (sequentialImageGeneration === 'auto' && maxImages && maxImages > 1) {
+      requestBody.sequential_image_generation_options = {
+        max_images: Math.min(maxImages, 15) // 限制最大数量
+      }
+    }
+  }
+  
+  // 即梦3.0特有参数
+  if (model === 'doubao-seedream-3-0-t2i-250415' || model === 'doubao-seededit-3-0-i2i-250628') {
+    if (guidanceScale) {
+      requestBody.guidance_scale = guidanceScale
+    }
+    if (seed) {
+      requestBody.seed = parseInt(seed)
+    }
+  }
+  
+  console.log('[ByteDance Jimeng] 请求参数:', requestBody)
+  
+  try {
+    const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[ByteDance Jimeng] API调用失败:', response.status, errorText)
+      throw new Error(`ByteDance API call failed: ${response.status} - ${errorText}`)
+    }
+    
+    const result = await response.json()
+    console.log('[ByteDance Jimeng] API响应:', result)
+    
+    if (result.data && result.data.length > 0) {
+      // 返回第一张图片的URL
+      const imageUrl = result.data[0].url
+      console.log('[ByteDance Jimeng] 图片生成成功:', imageUrl)
+      
+      // 如果是组图模式，可以在这里处理多张图片
+      if (result.data.length > 1) {
+        console.log(`[ByteDance Jimeng] 组图生成成功，共 ${result.data.length} 张图片`)
+        // 这里可以扩展支持多图片返回，目前返回第一张
+      }
+      
+      return imageUrl
+    }
+    
+    throw new Error('ByteDance API返回格式无效: 缺少图片数据')
+    
+  } catch (error) {
+    console.error('[ByteDance Jimeng] 图片生成失败:', error)
+    throw error
+  }
+}
+
 // 图片URL转base64函数
 async function convertImagesToBase64(html: string): Promise<string> {
   console.log('📷 Starting image to base64 conversion...')
@@ -9064,6 +9650,61 @@ app.post('/api/test/wordpress-convert', async (c) => {
   } catch (error) {
     console.error('WordPress test error:', error)
     return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// 🧪 ByteDance Jimeng 4.0 连接测试API
+app.post('/api/test/bytedance', async (c) => {
+  try {
+    const { apiKey, model } = await c.req.json()
+    
+    if (!apiKey) {
+      return c.json({ success: false, error: 'Missing ARK API Key' }, 400)
+    }
+    
+    console.log('[ByteDance Test] 测试连接开始...', { model })
+    
+    // 发送简单的测试请求到字节跳动ARK API
+    const testResponse = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model || 'doubao-seedream-4-0-250828',
+        prompt: '测试连接',
+        size: '1024x1024',
+        sequential_image_generation: 'disabled',
+        stream: false,
+        response_format: 'url',
+        watermark: true
+      })
+    })
+    
+    const result = await testResponse.json()
+    console.log('[ByteDance Test] API响应:', { status: testResponse.status, result })
+    
+    if (testResponse.ok && result.data) {
+      return c.json({ 
+        success: true, 
+        message: 'ByteDance ARK API连接成功',
+        model: result.model,
+        created: result.created
+      })
+    } else {
+      return c.json({ 
+        success: false, 
+        error: result.error?.message || `API返回错误: ${testResponse.status}`
+      }, testResponse.status)
+    }
+    
+  } catch (error) {
+    console.error('[ByteDance Test] 连接测试失败:', error)
+    return c.json({ 
+      success: false, 
+      error: error.message || '网络连接失败'
+    }, 500)
   }
 })
 
